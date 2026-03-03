@@ -18,21 +18,15 @@
 ---
 
 ## 🟢 Vue 3 開發規範
-- **語法標準**: 必須使用 `<script setup>` 與 **Composition API**。嚴禁使用 Options API。
+- **語法標準**: 必須使用 `<script setup>` 與 **Composition API**。
 - **響應式選擇**: 優先使用 `ref()` 以保持型別推導與解構的穩定性。
 - **宏指令**: 必須使用 `defineProps<T>()` 與 `defineEmits<T>()` 的編譯時型別定義。
-- **邏輯抽離**: 複雜邏輯必須封裝為 **Hooks** (use... ts)。
+- **邏輯抽離**: 複雜邏輯必須封裝為 **Composables** (use... ts), 資料夾名稱為 **hooks**。
 - **狀態管理**: 優先使用 Pinia 或 Vue Query (TanStack Query)。
-
----
-
-## 🔄 Vue 2 轉 Vue 3 搬遷規範
-- **清空舊思維**: 徹底移除 `this` 上下文。
-- **API 轉換**:
-  - `Vue.set` / `this.$set` 直接改為對 reactive 物件賦值。
-  - `$emit` 轉為 `defineEmits`；`.sync` 改為 `v-model` 指令。
-- **生命週期**: `mounted` → `onMounted`, `destroyed` → `onUnmounted`。
-- **全域屬性**: 將 `Vue.prototype` 搬遷至 `app.config.globalProperties` 或使用 `provide/inject`。
+- **元件命名與使用**:
+  - **定義**: 定義組件檔案與元件名稱時使用 **PascalCase** (例如 `EformListWay.vue`)。
+  - **模板使用**: 在 Vue Template 中呼叫元件時，**必須強制使用 kebab-case** (例如 `<eform-list-way />`)。
+  - **閉合標籤**: 優先使用自閉合標籤 (Self-closing)，除非該元件有 Slot 內容。
 
 ---
 
@@ -41,6 +35,7 @@
 - **檔案組織**: 遵循 **Feature-based** 目錄結構 (例如 `features/auth/*`)。
 - **Clean Code**: 函數應符合單一職責原則 (SRP)，單個元件建議不超過 200 行。
 - **測試優先**: 邏輯變動應附帶 **Vitest** 或 **Testing Library** 測試案例。
+- **Jsdoc**: 請使用繁體中文（台灣）進行描述，**object**請以物件說明，**array**請以陣列說明。
 
 ---
 
