@@ -12,7 +12,6 @@
   - 避免在 Render 過程中定義匿名函數。
   - 嚴格遵守 Hooks 依賴陣列規範，禁止隨意規避。
 - **型別要求**: 必須為 `props` 定義 interface。優先使用 `React.FC<Props>` 或直接定義函數參數。
-- **樣式**: 優先使用 **Tailwind CSS**，保持 JS 邏輯與樣式解耦。
 - **狀態管理**: 優先使用 Zustand 或 React Query (TanStack Query)，避免不必要的 Context API 濫用。
 
 ---
@@ -23,6 +22,7 @@
 - **宏指令**: 必須使用 `defineProps<T>()` 與 `defineEmits<T>()` 的編譯時型別定義。
 - **邏輯抽離**: 複雜邏輯必須封裝為 **Composables** (use... ts), 資料夾名稱為 **hooks**。
 - **狀態管理**: 優先使用 Pinia 或 Vue Query (TanStack Query)。
+- **顯式參數傳遞**: 避免使用 `provide` 與 `inject` 進行隱式傳遞。
 - **元件命名與使用**:
   - **定義**: 定義組件檔案與元件名稱時使用 **PascalCase** (例如 `EformListWay.vue`)。
   - **模板使用**: 在 Vue Template 中呼叫元件時，**必須強制使用 kebab-case** (例如 `<eform-list-way />`)。
@@ -41,7 +41,7 @@
 
 ## 💬 溝通與執行模式
 1. **Plan Mode (優先)**: 修改前必須分析「副作用 (Side Effects)」，並列出受影響的檔案。
-2. **Context First**: 生成代碼前，先讀取專案既有的 Coding Style 並保持一致。
+2. **Context First**: 生成程式碼前，先讀取專案既有的 Coding Style 並保持一致。
 3. **Code Review Style**: 在提供程式碼後，簡短說明「為什麼」這樣設計，而非只給程式碼。
 4. **解釋原因**: 不僅提供程式碼，還需簡短說明設計背後的考量（Trade-offs）。
 5. **語言**: 始終使用繁體中文（台灣）進行溝通。
