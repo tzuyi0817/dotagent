@@ -26,14 +26,17 @@ methods: {
 
 ```ts
 // ✅ 轉換後
-const loading = ref(false)
-const data = ref<ResponseType | null>(null)
+const loading = ref(false);
+const data = ref<ResponseType | null>(null);
 
-async function fetchData(url: string) {
-  loading.value = true
-  const res = await api.get(url)
-  data.value = res
-  loading.value = false
+function fetchData(url: string) {
+  loading.value = true;
+
+  api.get(url).then((res) => {
+    data.value = res;
+  }).finally(() => {
+    loading.value = false;
+  });
 }
 ```
 
@@ -51,10 +54,10 @@ Composable 接收的外部參數應設計為 `MaybeRef<T>`，內部以 `toRef` �
 ### 範例
 
 ```ts
-import { toRef } from 'vue'
-import type { Ref } from 'vue'
+import { toRef } from 'vue';
+import type { Ref } from 'vue';
 
-type MaybeRef<T> = T | Ref<T>
+type MaybeRef<T> = T | Ref<T>;
 
 /**
  * 分頁 Composable
@@ -62,12 +65,12 @@ type MaybeRef<T> = T | Ref<T>
  */
 export function usePagination(pageSize: MaybeRef<number> = 10) {
   // toRef：若傳入純值則包裝為 Ref，若已為 Ref 則直接使用
-  const normalizedPageSize = toRef(pageSize)
-  const currentPage = ref(1)
+  const normalizedPageSize = toRef(pageSize);
+  const currentPage = ref(1);
 
-  const offset = computed(() => (currentPage.value - 1) * normalizedPageSize.value)
+  const offset = computed(() => (currentPage.value - 1) * normalizedPageSize.value);
 
-  return { currentPage, offset }
+  return { currentPage, offset };
 }
 ```
 
@@ -93,8 +96,9 @@ export function useTheme() {
 
 // ✅ 正確：透過參數顯式傳入
 export function useTheme(theme: MaybeRef<'light' | 'dark'>) {
-  const normalizedTheme = toRef(theme)
-  const isDark = computed(() => normalizedTheme.value === 'dark')
+  const normalizedTheme = toRef(theme);
+  const isDark = computed(() => normalizedTheme.value === 'dark');
+
   return { isDark }
 }
 ```
@@ -115,15 +119,20 @@ Composable 必須回傳一個包含多個 `ref` / `computed` / `function` 的 Pl
 ```ts
 // ❌ 錯誤：回傳陣列
 export function useCounter() {
-  const count = ref(0)
-  return [count, () => count.value++]  // 解構不具語意
+  const count = ref(0);
+
+  return [count, () => count.value++];  // 解構不具語意
 }
 
 // ✅ 正確：回傳物件
 export function useCounter() {
-  const count = ref(0)
-  function increment() { count.value++ }
-  return { count, increment }
+  const count = ref(0);
+
+  function increment() { 
+    count.value += 1;
+  }
+
+  return { count, increment };
 }
 ```
 
@@ -152,34 +161,37 @@ export function useForm(emit: (event: string, ...args: unknown[]) => void, store
 
 // ✅ 正確：Composable 回傳結果，元件層自行處理
 export function useForm() {
-  const formData = ref<FormData>({ name: '', email: '' })
-  const isValid = computed(() => formData.value.name !== '' && formData.value.email !== '')
+  const formData = ref<FormData>({ name: '', email: '' });
+  const isValid = computed(() => formData.value.name !== '' && formData.value.email !== '');
 
   function getSubmitPayload() {
-    return { ...formData.value }
+    return { ...formData.value };
   }
 
-  return { formData, isValid, getSubmitPayload }
+  return { formData, isValid, getSubmitPayload };
 }
 ```
 
 ```vue
 <!-- 元件層：由元件自行呼叫 emit 與 store -->
 <script setup lang="ts">
-import { useForm } from '@/hooks/useForm'
-import { useSomeStore } from '@/stores/someStore'
+import { useForm } from '@/hooks/useForm';
+import { useSomeStore } from '@/stores/someStore';
 
-const emit = defineEmits<{
-  submitted: []
-}>()
-const store = useSomeStore()
+interface Emits {
+  submitted: [];
+}
 
-const { formData, isValid, getSubmitPayload } = useForm()
+const emit = defineEmits<Emits>();
+const store = useSomeStore();
+
+const { formData, isValid, getSubmitPayload } = useForm();
 
 function handleSubmit() {
-  if (!isValid.value) return
-  store.saveData(getSubmitPayload())
-  emit('submitted')
+  if (!isValid.value) return;
+
+  store.saveData(getSubmitPayload());
+  emit('submitted');
 }
 </script>
 ```
@@ -208,11 +220,11 @@ export default {
 ```vue
 <!-- ✅ 轉換後：元件使用 Composable -->
 <script setup lang="ts">
-import { useForm } from '@/hooks/useForm'
-import { useValidation } from '@/hooks/useValidation'
+import { useForm } from '@/hooks/useForm';
+import { useValidation } from '@/hooks/useValidation';
 
-const { formData, resetForm } = useForm()
-const { errors, validate } = useValidation()
+const { formData, resetForm } = useForm();
+const { errors, validate } = useValidation();
 </script>
 ```
 
@@ -236,8 +248,8 @@ Category: Composable Design
 const state = reactive({ count: 0, name: '' })
 
 // ✅ 推薦
-const count = ref(0)
-const name = ref('')
+const count = ref(0);
+const name = ref('');
 ```
 
 ---
@@ -247,14 +259,14 @@ const name = ref('')
 由於 Vue 2.7 不內建 `toValue`（Vue 3.3+），建議在專案中建立以下工具型別：
 
 ```ts
-import { isRef, ref } from 'vue'
-import type { Ref } from 'vue'
+import { isRef, ref } from 'vue';
+import type { Ref } from 'vue';
 
 /**
  * Vue 2 兼容的 MaybeRef 類型。
  * 允許 Composable 同時接受純值或響應式 Ref，提升彈性。
  */
-export type MaybeRef<T> = T | Ref<T>
+export type MaybeRef<T> = T | Ref<T>;
 
 /**
  * 手動實作類 toValue 邏輯，用於解析 MaybeRef 的實際值。
@@ -262,7 +274,7 @@ export type MaybeRef<T> = T | Ref<T>
  * @returns 解析後的實際值
  */
 export function resolveRef<T>(val: MaybeRef<T>): T {
-  return isRef(val) ? val.value : val
+  return isRef(val) ? val.value : val;
 }
 ```
 

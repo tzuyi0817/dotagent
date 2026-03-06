@@ -98,10 +98,10 @@ export default defineComponent({
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-const visible = ref(true)
-const items = ref<Item[]>([])
+const visible = ref(true);
+const items = ref<Item[]>([]);
 
 function select(item: Item) {
   // ...

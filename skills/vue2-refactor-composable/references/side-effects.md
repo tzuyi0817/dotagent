@@ -13,46 +13,46 @@ Category: Side Effects
 
 ```ts
 export function useWindowResize() {
-  const width = ref(window.innerWidth)
+  const width = ref(window.innerWidth);
 
   function handleResize() {
-    width.value = window.innerWidth
+    width.value = window.innerWidth;
   }
 
   onMounted(() => {
-    window.addEventListener('resize', handleResize)
-  })
+    window.addEventListener('resize', handleResize);
+  });
 
   // 必須清理
   onUnmounted(() => {
-    window.removeEventListener('resize', handleResize)
-  })
+    window.removeEventListener('resize', handleResize);
+  });
 
-  return { width }
+  return { width };
 }
 ```
 
 ```ts
 export function usePolling(callback: () => void, interval: MaybeRef<number> = 3000) {
-  const normalizedInterval = toRef(interval)
-  let timerId: ReturnType<typeof setInterval> | null = null
+  const normalizedInterval = toRef(interval);
+  let timerId: ReturnType<typeof setInterval> | null = null;
 
   function start() {
-    stop()
-    timerId = setInterval(callback, normalizedInterval.value)
+    cleanup();
+    timerId = setInterval(callback, normalizedInterval.value);
   }
 
-  function stop() {
+  function cleanup() {
     if (timerId !== null) {
-      clearInterval(timerId)
-      timerId = null
+      clearInterval(timerId);
+      timerId = null;
     }
   }
 
   // 必須清理
-  onUnmounted(stop)
+  onUnmounted(cleanup);
 
-  return { start, stop }
+  return { start, stop };
 }
 ```
 
@@ -71,38 +71,40 @@ Category: Side Effects
 
 ```vue
 <script setup lang="ts">
-import { toRef } from 'vue'
-import { useSearch } from '@/hooks/useSearch'
+import { toRef } from 'vue';
+import { useSearch } from '@/hooks/useSearch';
 
-const props = defineProps<{
-  keyword: string
-  categoryId: number
-}>()
+interface Props {
+  keyword: string;
+  categoryId: number;
+}
+
+const props = defineProps<Props>();
 
 // ✅ 使用 toRef 保持響應性
 const { results, isLoading } = useSearch(
   toRef(props, 'keyword'),
   toRef(props, 'categoryId')
-)
+);
 </script>
 ```
 
 ```ts
 // hooks/useSearch.ts
 export function useSearch(keyword: MaybeRef<string>, categoryId: MaybeRef<number>) {
-  const normalizedKeyword = toRef(keyword)
-  const normalizedCategoryId = toRef(categoryId)
+  const normalizedKeyword = toRef(keyword);
+  const normalizedCategoryId = toRef(categoryId);
 
-  const results = ref<SearchResult[]>([])
-  const isLoading = ref(false)
+  const results = ref<SearchResult[]>([]);
+  const isLoading = ref(false);
 
   watch([normalizedKeyword, normalizedCategoryId], async ([kw, catId]) => {
-    isLoading.value = true
-    results.value = await searchApi.query(kw, catId)
-    isLoading.value = false
-  }, { immediate: true })
+    isLoading.value = true;
+    results.value = await searchApi.query(kw, catId);
+    isLoading.value = false;
+  }, { immediate: true });
 
-  return { results, isLoading }
+  return { results, isLoading };
 }
 ```
 
