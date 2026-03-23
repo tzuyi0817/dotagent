@@ -6,16 +6,7 @@
 ---
 
 ## Vue 3 開發規範
-- **語法標準**: 必須使用 `<script setup>` 與 **Composition API**。
-- **響應式選擇**: 優先使用 `ref()` 以保持型別推導與解構的穩定性。
-- **宏指令**: 必須使用 `defineProps<T>()` 與 `defineEmits<T>()` 的編譯時型別定義。
-- **邏輯抽離**: 複雜邏輯必須封裝為 **Composables** (use... ts), 資料夾名稱為 **hooks**。
-- **狀態管理**: 優先使用 Pinia 或 Vue Query (TanStack Query)。
-- **顯式參數傳遞**: 避免使用 `provide` 與 `inject` 進行隱式傳遞。
-- **元件命名與使用**:
-  - **定義**: 定義組件檔案與元件名稱時使用 **PascalCase** (例如 `EformListWay.vue`)。
-  - **模板使用**: 在 Vue Template 中呼叫元件時，**必須強制使用 kebab-case** (例如 `<eform-list-way />`)。
-  - **閉合標籤**: 優先使用自閉合標籤 (Self-closing)，除非該元件有 Slot 內容。
+完整規範請參閱 **vue3-setup** skill（`skills/vue3-setup/SKILL.md`），涵蓋 Props、Emits、Store、Composable、v-model、Template Refs 等慣用寫法與禁令。
 
 ---
 
