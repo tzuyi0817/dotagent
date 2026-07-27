@@ -1,0 +1,25 @@
+{
+  "model": "claude-fable-5[1m]",
+  "includeCoAuthoredBy": false,
+  "enabledPlugins": {
+    "everything-claude-code@everything-claude-code": true,
+    "example-skills@anthropic-agent-skills": true,
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "everything-claude-code": {
+      "source": {
+        "source": "github",
+        "repo": "affaan-m/everything-claude-code"
+      }
+    },
+    "anthropic-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/skills"
+      }
+    }
+  },
+  "effortLevel": "xhigh",
+  "tui": "fullscreen"
+}
