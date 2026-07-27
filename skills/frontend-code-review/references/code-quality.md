@@ -1,5 +1,7 @@
 # 規則目錄 — 程式碼品質
 
+> 新增、編輯或移除程式碼品質規則時，請同步更新此檔案，確保目錄保持正確。
+
 ## 條件式 class 名稱使用工具函式
 
 IsUrgent: True
@@ -25,9 +27,10 @@ Category: Code Quality
 
 優先使用 Tailwind CSS 工具類別，而非新增 `.module.css` 檔案，除非 Tailwind 的組合無法達成所需樣式。將樣式統一在 Tailwind 中可提升一致性並降低維護負擔。
 
-新增、編輯或移除程式碼品質規則時，請同步更新此檔案，確保目錄保持正確。
-
 ## Classname 排序以利覆寫
+
+IsUrgent: False
+Category: Code Quality
 
 ### 說明
 
