@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 **審查文字的語言**：跟隨該 repo 既有的語言與語系慣例（看既有 PR 意見與 commit message）；repo 無明確慣例時使用繁體中文（台灣）。程式碼、指令、`suggestion` block 內容不在此限。
 
-作者已針對前一輪修正並要求再審時，這是**追加審查**：證據鏈相同，但候選來源、body 結構與收尾條件不同。開始前先完整讀 [FOLLOW-UP.md](FOLLOW-UP.md) 並照做，它會指明覆寫了哪些步驟。
+使用者說「再審一次」「修好了再看」，或該 PR 上已經有你送出過的 review（`gh api /repos/<owner>/<repo>/pulls/<n>/reviews`）時，這是**追加審查**：證據鏈相同，但候選來源、body 結構與收尾條件不同。開始前先完整讀 [FOLLOW-UP.md](FOLLOW-UP.md) 並照做，它會指明覆寫了哪些步驟。
 
 ## 0. 判斷規模，選擇路徑
 
@@ -30,6 +30,20 @@ gh pr diff <n> --repo <owner>/<repo> --patch | diffstat -s
 
 ## 1. 取得 PR 與可定位行號的原始碼
 
+先從使用者的輸入定位 PR，三種形式都要支援：
+
+- **完整連結**（`https://github.com/<owner>/<repo>/pull/123`）：從 URL 解析 `<owner>/<repo>` 與編號，**不假設它就是目前所在的 repo**，跨 repo 審查是常態。
+- **純編號**（`123`）：以目前工作目錄的 repo 為準，`gh repo view --json nameWithOwner -q .nameWithOwner`。
+- **沒給**：取目前分支對應的 PR，`gh pr view --json number,url`。找不到就問使用者，不要猜。
+
+目標 repo 不是本機這一份時，先取得可讀取原始碼的本機副本，否則之後的 `git show pr-<n>:<path>` 全都無從執行；本機已有 clone 就直接用，不重複下載：
+
+```bash
+gh repo clone <owner>/<repo> <scratchpad>/<repo> -- --filter=blob:none
+```
+
+以下所有指令中的 `<repo>` 一律指這份本機副本的絕對路徑。
+
 ```bash
 gh pr view <n> --repo <owner>/<repo> --json number,title,body,baseRefName,headRefName,files,url
 gh pr diff <n> --repo <owner>/<repo> > <scratchpad>/pr<n>.diff
@@ -40,7 +54,7 @@ git -C <repo> fetch origin pull/<n>/head:pr-<n> --force
 
 new-file 行號與 suggestion 內容一律只從 `git show pr-<n>:<path>` 取得；從 diff 複製會把行號偏移或 `+`/`-` 前綴帶進結果。
 
-完成判準：每個變更檔案都能透過 `git show pr-<n>:<path> | cat -n` 讀取，且每個 hunk 都對應到 new-file 行號。
+完成判準：`<owner>`、`<repo>`、PR 編號、本機 repo 絕對路徑四者皆已確定；每個變更檔案都能透過 `git show pr-<n>:<path> | cat -n` 讀取；且每個 hunk 都對應到 new-file 行號。
 
 ## 2. Finder：平行搜尋候選
 
