@@ -1,18 +1,18 @@
 ---
 name: review-pr
-description: "審查 GitHub PR 並發布有證據、可直接套用的審查意見（附 suggestion block）。當使用者要求審查某個 PR，或作者推送修正後要求再審一輪時使用。"
+description: "審查 GitHub PR 並發布有證據、可直接套用的審查意見（附 suggestion block）；使用者本人的 PR 則輸出到終端機，不 POST。當使用者要求審查某個 PR，或作者推送修正後要求再審一輪時使用。"
 disable-model-invocation: true
 ---
 
 # 審查 PR：發布有證據、可直接套用的意見
 
-走一條**證據鏈**：Finder 找出候選，Verifier 獨立裁決候選是否成立，Fix Verifier 獨立裁決修法是否正確，存活下來的發現才寫回 PR。候選還不是意見，沒人試著反駁過的修法也不是。
+走一條**證據鏈**：Finder 找出候選，Verifier 獨立裁決候選是否成立，Fix Verifier 獨立裁決修法是否正確，只有存活下來的發現進得了 review。候選還不是意見，沒人試著反駁過的修法也不是。
 
-除了必須重新產生的產物（lockfile、build 輸出），每則 inline comment 都要有**錨定的 new-file 行號範圍**、**精簡的說明**、以及可直接套用的 `suggestion` block。所有 inline comment 一次送出為單一 review。
+除了必須重新產生的產物（lockfile、build 輸出），每則 inline comment 都要有**錨定的 new-file 行號範圍**、**精簡的說明**、以及可直接套用的 `suggestion` block。整輪的 inline comment 是單一 review，一次投遞：別人的 PR 送到 PR 上，使用者本人的 PR 輸出到終端機（步驟 8）。
 
 **審查文字的語言**：跟隨該 repo 既有的語言與語系慣例（看既有 PR 意見與 commit message）；repo 無明確慣例時使用繁體中文（台灣）。程式碼、指令、`suggestion` block 內容不在此限。
 
-使用者說「再審一次」「修好了再看」，或該 PR 上已經有你送出過的 review（`gh api /repos/<owner>/<repo>/pulls/<n>/reviews`）時，這是**追加審查**：證據鏈相同，但候選來源、body 結構與收尾條件不同。開始前先完整讀 [FOLLOW-UP.md](FOLLOW-UP.md) 並照做，它會指明覆寫了哪些步驟。
+使用者說「再審一次」「修好了再看」，或這個 PR 已經有你審過的紀錄（`gh api /repos/<owner>/<repo>/pulls/<n>/reviews`，以及步驟 8 留在 `<git-common-dir>/dotagent-review/pr-<n>/` 的記錄——本人的 PR 只有後者查得到）時，這是**追加審查**：證據鏈相同，但候選來源、body 結構與收尾條件不同。開始前先完整讀 [FOLLOW-UP.md](FOLLOW-UP.md) 並照做，它會指明覆寫了哪些步驟。
 
 ## 0. 判斷規模，選擇路徑
 
@@ -45,16 +45,19 @@ gh repo clone <owner>/<repo> <scratchpad>/<repo> -- --filter=blob:none
 以下所有指令中的 `<repo>` 一律指這份本機副本的絕對路徑。
 
 ```bash
-gh pr view <n> --repo <owner>/<repo> --json number,title,body,baseRefName,headRefName,files,url
+gh pr view <n> --repo <owner>/<repo> --json number,title,body,author,baseRefName,headRefName,files,url
 gh pr diff <n> --repo <owner>/<repo> > <scratchpad>/pr<n>.diff
 git -C <repo> fetch origin pull/<n>/head:pr-<n> --force
+gh api /user --jq .login
 ```
+
+比對 `author.login` 與 `gh api /user` 的 login，判定這是不是**使用者本人的 PR**。這件事決定步驟 8 的投遞方式，在這裡就定下來：本人的 PR 不 POST，一開始就講明，使用者才不必看完整輪才知道意見不會出現在 PR 上。證據鏈本身不因作者是誰而改變。
 
 用 `gh pr diff` 判斷什麼被改動、以及某個變更是否屬於這個 PR。**不要**用 `git diff <本地 base>...pr-<n>` 判斷歸屬：base 過期或發生過 rebase 都會把無關的變更捲進那份 diff。
 
 new-file 行號與 suggestion 內容一律只從 `git show pr-<n>:<path>` 取得；從 diff 複製會把行號偏移或 `+`/`-` 前綴帶進結果。
 
-完成判準：`<owner>`、`<repo>`、PR 編號、本機 repo 絕對路徑四者皆已確定；每個變更檔案都能透過 `git show pr-<n>:<path> | cat -n` 讀取；且每個 hunk 都對應到 new-file 行號。
+完成判準：`<owner>`、`<repo>`、PR 編號、本機 repo 絕對路徑四者皆已確定；是否為本人的 PR 已判定並告知使用者；每個變更檔案都能透過 `git show pr-<n>:<path> | cat -n` 讀取；且每個 hunk 都對應到 new-file 行號。
 
 ## 2. Finder：平行搜尋候選
 
@@ -184,7 +187,7 @@ pnpm monorepo 在該 worktree 內以 `pnpm install --frozen-lockfile --prefer-of
 - **推翻**（移動、反向或取代先前的修法）：只有在新進的 diff 動過那段程式碼、或你握有先前那輪沒有的證據時才成立。在意見中直說先前那則是錯的、附上新證據，並在 body 統計本輪的自我推翻次數。沒有新證據就不是推翻，而是**來回擺盪**。
 - **來回擺盪**（回到某一輪已經放棄過的修法）：撤掉，不要重送。在同一個地方跨輪擺盪，證明的是沒有任何一輪的證據撐得起任一種形式。把那份不確定寫進 body 交給作者裁決，不附 suggestion。
 
-分類依據是 Fix Verifier 的裁決與先前各輪的送出紀錄，不是自我評估。
+分類依據是 Fix Verifier 的裁決與先前各輪的紀錄，不是自我評估。先前各輪讀自 `<git-common-dir>/dotagent-review/pr-<n>/`（見步驟 8），其中 `withdrawn` 是判斷來回擺盪的唯一依據——被撤掉的修法不曾出現在 PR 上，API 查不到。
 
 **誠實性。** 逐項檢查：
 
@@ -193,7 +196,7 @@ pnpm monorepo 在該 worktree 內以 `pnpm install --frozen-lockfile --prefer-of
 
 完成判準：每個與歷史重疊的 suggestion 都標記為延伸、推翻或來回擺盪；每個推翻都帶著先前那輪沒有的證據，並同時寫在意見與 body 中；每個來回擺盪都已撤掉且其不確定性已記入 body；body 的數字與 `comments` 陣列相符；非阻擋段落的每一句都有指名證據。
 
-## 8. 送出 review 並驗證錨點
+## 8. 投遞 review：終端機或 PR
 
 建立一個 Python 檔來產生 payload JSON。讓 Python 去編碼反引號、反斜線與引號，shell heredoc 才傷不到 suggestion 內容。
 
@@ -216,6 +219,24 @@ payload = {
 
 單行意見則省略 `start_line` 與 `start_side`。範圍必須落在 RIGHT 側的 diff hunk 內，否則 GitHub 會以 422 拒絕整個請求。
 
+payload 一律寫成 `<scratchpad>/review.json`。兩條投遞路徑共用這同一份內容：步驟 1 判定為**本人的 PR** 時輸出到終端機，否則 POST 到 PR。變的只有投遞方式，body、錨點與 suggestion 的內容不因路徑而異。兩條路徑都以「留下這一輪的記錄」收尾。
+
+### 本人的 PR：輸出到終端機
+
+自己審自己的 PR，不需要在 PR 上留下對自己說的話，因此**不 POST**。把 `review.json` 的內容照原樣印到終端機：
+
+- 先 review body 全文。
+- 再逐則 inline comment，每則以一行 `<path>:<start_line>-<line>` 開頭（單行意見為 `<path>:<line>`），接著說明與 `suggestion` block，逐字元照 payload 輸出，不重新排版也不摘要。
+- 最後給出這一輪記錄的路徑。
+
+`suggestion` block 在終端機沒有 Commit 按鈕，但範圍與內容不變，自己動手套用或事後貼上 PR 用的都是同一份。
+
+使用者看過之後明確要求送上 PR 時，才走下面的送出流程，且 `event` 一律用 `COMMENT`——GitHub 拒絕對自己的 PR 送 `APPROVE` 或 `REQUEST_CHANGES`，會以 422 退掉整個請求，一則 inline comment 都不會進去。
+
+完成判準：review body 與每則 inline comment 都已連同錨點與 `suggestion` 印在終端機上，內容與 `review.json` 相符；這一輪記錄的路徑已給出；且所有未在瀏覽器或執行環境中驗證過的部分都已說明。
+
+### 別人的 PR：送出並驗證錨點
+
 由存活的發現決定 `event`：有任何阻擋發現用 `REQUEST_CHANGES`；只有觀察與建議用 `COMMENT`；沒有問題殘留用 `APPROVE`。使用者要求 request changes 但證據撐不起任何阻擋發現時，用 `COMMENT` 並在 body 說明原因。
 
 **送出前先確認。** review 一旦 POST 出去，PR 上的所有人都看得到，且無法乾淨地撤回。先把這四項給使用者過目，取得同意再送：目標 repo 與 PR 編號、`event`、每則 inline comment 的 `path:start_line-line` 與一句話摘要、body 的開頭段落。使用者已明確說過「直接送出、不用問」時才略過這一關。
@@ -237,3 +258,37 @@ gh api /repos/<owner>/<repo>/pulls/<n>/comments \
 最後給使用者 review 連結、每個發現的一句話摘要，以及所有未在瀏覽器或執行環境中驗證過的部分。
 
 完成判準：review 已用正確的 event 送出，每則預期的意見都出現在 PR 上且 `line` 非 null，且給使用者的回報包含 review 連結、所有發現與所有未驗證的部分。
+
+### 留下這一輪的記錄
+
+兩條路徑都要留。scratchpad 隨 session 消失，而下一輪必須知道上一輪做了什麼——本人的 PR 尤其如此，它的前幾輪在 PR 上完全查不到。記錄放在 git 目錄底下，天生不進版控，也不必動 `.gitignore`：
+
+```bash
+git -C <repo> rev-parse --path-format=absolute --git-common-dir
+git -C <repo> rev-parse pr-<n>
+```
+
+用 `--git-common-dir` 而非 `--git-dir`：在步驟 6 的 detached worktree 底下，後者指向 `worktrees/<name>/`，記錄會散落在各個 worktree 裡而彼此看不見。
+
+寫到 `<git-common-dir>/dotagent-review/pr-<n>/round-<NN>.json`，`<NN>` 為兩位數零補，接在該目錄既有的最大號之後：
+
+```json
+{
+  "repo": "<owner>/<repo>",
+  "pr": 123,
+  "head_sha": "本輪實際審的 commit，取自上面的 rev-parse pr-<n>",
+  "reviewed_at": "ISO 8601",
+  "delivery": "terminal",
+  "review_url": null,
+  "payload": {},
+  "withdrawn": [
+    { "path": "apps/foo/bar.vue", "line": 138, "summary": "一句話", "reason": "unsound" }
+  ]
+}
+```
+
+`payload` 就是上面送出用的那份，原樣嵌進來。事後要送出時 `jq .payload <記錄> > <scratchpad>/review.json` 即可，不必重新產生。POST 過的那輪 `delivery` 為 `posted`、`review_url` 填 POST 回傳的 `html_url`。
+
+`withdrawn` 收錄本輪產生過但沒有投遞的修法：步驟 6 判 unsound 的、步驟 6 因衝突砍掉的、步驟 7 判為來回擺盪的。`reason` 就寫這三者之一。這些修法從來沒出現在 PR 上，任何 API 都查不到，而步驟 7 要判「回到某一輪已經放棄過的修法」，靠的正是它。
+
+完成判準：`round-<NN>.json` 已寫入，號碼接在既有記錄之後；`head_sha` 是本輪實際審的 commit；`delivery` 與 `review_url` 與實際投遞方式相符；`payload` 與投遞出去的內容逐字元相同；本輪每個撤掉的修法都在 `withdrawn` 裡並帶著 `reason`。
