@@ -1,15 +1,15 @@
-# Claude 個人設定移植庫
+# dotagent
 
-個人 Claude Code 偏好設定的版本庫，作為所有機器設定的**唯一事實來源**。換電腦時 clone 本 repo 並執行 `./install.sh`，即以 symlink 方式部署至 `~/.claude/`。
+個人 AI coding agent 工作環境的版本庫，作為所有機器設定的**唯一事實來源**。目前承載 Claude Code 的 `CLAUDE.md`、rules、skills、agents 與 settings；換電腦時 clone 本 repo 並執行 `./install.sh`，即以 symlink 方式部署至 `~/.claude/`。
 
 ## 新機器安裝
 
 ```bash
 # 1. 安裝 Claude Code
 # 2. clone 至固定位置（搬移 repo 後需重新執行 install.sh）
-git clone <repo-url> ~/Documents/claude
+git clone <repo-url> ~/Documents/dotagent
 # 3. 部署
-cd ~/Documents/claude && ./install.sh
+cd ~/Documents/dotagent && ./install.sh
 # 4. 重啟 Claude Code：plugins 會依 settings.json 的
 #    enabledPlugins + extraKnownMarketplaces 自動安裝
 ```
