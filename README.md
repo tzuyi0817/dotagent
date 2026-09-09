@@ -33,10 +33,13 @@ cd ~/Documents/dotagent && ./install.sh
 
 Claude Code 會在偏好變更（如 `/config`）時覆寫 `settings.json`，symlink 可能被一般檔案悄悄取代而失效，因此採複製部署。變更偏好後執行 `./sync.sh` 回收至 repo 並 commit。
 
+也因為它是被就地改寫的，「現行版與 repo 不一致」是常態。`./install.sh` 在不一致時會備份現行版並蓋回 repo 版；只想修復 symlink 而不想動到當下設定時，用 `./install.sh --skip-settings`。
+
 ## 日常維護
 
 - **修改 CLAUDE.md / rules / skills / agents**：直接編輯 repo 檔案（symlink 即時生效）→ commit。
 - **修改 settings.json**：在 Claude Code 內調整後執行 `./sync.sh` 回收 → commit。
+- **搬移 repo 或 symlink 失效後**：`./install.sh --skip-settings`（僅重建 symlink）。
 - `./sync.sh` 同時會檢查所有 symlink 是否完好，被覆寫時會提示重新執行 `./install.sh`。
 
 ## 不隨庫移植的項目
