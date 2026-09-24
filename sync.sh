@@ -15,7 +15,7 @@ fi
 
 # symlink 完整性檢查（與 install.sh 的部署清單一致）
 ITEMS=(
-  "CLAUDE.md"
+  "AGENTS.md:CLAUDE.md"
   "rules"
   "agents"
   "skills/vue3-setup"
@@ -27,8 +27,8 @@ ITEMS=(
 
 broken=0
 for item in "${ITEMS[@]}"; do
-  dst="$CLAUDE_DIR/$item"
-  if [ ! -L "$dst" ] || [ "$(readlink "$dst")" != "$REPO_DIR/$item" ]; then
+  dst="$CLAUDE_DIR/${item#*:}"
+  if [ ! -L "$dst" ] || [ "$(readlink "$dst")" != "$REPO_DIR/${item%%:*}" ]; then
     echo "警告: $dst 不是指向 repo 的 symlink（可能被覆寫），請重新執行 install.sh。"
     broken=1
   fi

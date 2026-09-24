@@ -1,6 +1,7 @@
 #!/bin/bash
 # 將此 repo 部署至 ~/.claude/
-# - CLAUDE.md、rules、agents、指定 skills 以 symlink 部署（repo 為唯一事實來源）
+# - AGENTS.md（部署為 CLAUDE.md）、rules、agents、指定 skills 以 symlink 部署（repo 為唯一事實來源）
+# - Windows（Git Bash）需先開啟開發人員模式並 export MSYS=winsymlinks:nativestrict，見 README
 # - settings.json 以複製部署（Claude Code 會覆寫此檔，symlink 有被一般檔案取代的風險）
 # 可重複執行（idempotent），既有檔案會先備份。
 #
@@ -33,10 +34,13 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
 BACKUP_DIR="$CLAUDE_DIR/backups/install-$(date +%Y%m%d-%H%M%S)"
 
-# 全域部署清單（skills/frontend-code-review 為 Dify 專案特定，不在此列，
+# 全域部署清單，格式為「repo 路徑」或「repo 路徑:~/.claude 下的路徑」
+# （skills/frontend-code-review 為 Dify 專案特定，不在此列，
 # 需要時部署至該專案的 .claude/skills/）
+# AGENTS.md 部署為 CLAUDE.md：Claude Code 不讀 ~/.claude/AGENTS.md。直接連到本體，
+# 而非 repo 的 CLAUDE.md（@AGENTS.md import），避免相對路徑經 symlink 解析的不確定性。
 ITEMS=(
-  "CLAUDE.md"
+  "AGENTS.md:CLAUDE.md"
   "rules"
   "agents"
   "skills/vue3-setup"
@@ -55,8 +59,8 @@ backup() {
 mkdir -p "$CLAUDE_DIR/skills"
 
 for item in "${ITEMS[@]}"; do
-  src="$REPO_DIR/$item"
-  dst="$CLAUDE_DIR/$item"
+  src="$REPO_DIR/${item%%:*}"
+  dst="$CLAUDE_DIR/${item#*:}"
 
   if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$src" ]; then
     echo "跳過（已連結）: $dst"
@@ -66,6 +70,11 @@ for item in "${ITEMS[@]}"; do
     backup "$dst"
   fi
   ln -sfn "$src" "$dst"
+  # Git Bash 未設定 MSYS=winsymlinks:nativestrict 時，ln -s 會靜默改為複製
+  if [ ! -L "$dst" ]; then
+    echo "錯誤: $dst 未建立為 symlink（Windows 請見 README 的前置設定）。" >&2
+    exit 1
+  fi
   echo "連結: $dst -> $src"
 done
 
