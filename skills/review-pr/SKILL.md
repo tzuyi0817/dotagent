@@ -1,6 +1,6 @@
 ---
 name: review-pr
-description: "審查 GitHub PR 並發布有證據、可直接套用的審查意見（附 suggestion block）；使用者本人的 PR 則輸出到終端機，不 POST。當使用者要求審查某個 PR，或作者推送修正後要求再審一輪時使用。"
+description: "審查 GitHub PR 並發布有證據、可直接套用的審查意見（附 suggestion block）；使用者本人的 PR 則輸出到終端機、不 POST，並逐項與使用者討論後直接修正。當使用者要求審查某個 PR，或作者推送修正後要求再審一輪時使用。"
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 走一條**證據鏈**：Finder 找出候選，Verifier 獨立裁決候選是否成立，Fix Verifier 獨立裁決修法是否正確，只有存活下來的發現進得了 review。候選還不是意見，沒人試著反駁過的修法也不是。
 
-除了必須重新產生的產物（lockfile、build 輸出），每則 inline comment 都要有**錨定的 new-file 行號範圍**、**精簡的說明**、以及可直接套用的 `suggestion` block。整輪的 inline comment 是單一 review，一次投遞：別人的 PR 送到 PR 上，使用者本人的 PR 輸出到終端機（步驟 8）。
+除了必須重新產生的產物（lockfile、build 輸出），每則 inline comment 都要有**錨定的 new-file 行號範圍**、**精簡的說明**、以及可直接套用的 `suggestion` block。整輪的 inline comment 是單一 review，一次投遞：別人的 PR 送到 PR 上，使用者本人的 PR 輸出到終端機，接著逐項討論並修正（步驟 8、[DISCUSS.md](DISCUSS.md)）。
 
 **審查文字的語言**：跟隨該 repo 既有的語言與語系慣例（看既有 PR 意見與 commit message）；repo 無明確慣例時使用繁體中文（台灣）。程式碼、指令、`suggestion` block 內容不在此限。
 
@@ -227,13 +227,15 @@ payload 一律寫成 `<scratchpad>/review.json`。兩條投遞路徑共用這同
 
 - 先 review body 全文。
 - 再逐則 inline comment，每則以一行 `<path>:<start_line>-<line>` 開頭（單行意見為 `<path>:<line>`），接著說明與 `suggestion` block，逐字元照 payload 輸出，不重新排版也不摘要。
-- 最後給出這一輪記錄的路徑。
+- 最後給出這一輪記錄的路徑（記錄照下方「留下這一輪的記錄」先寫好再印）。
 
 `suggestion` block 在終端機沒有 Commit 按鈕，但範圍與內容不變，自己動手套用或事後貼上 PR 用的都是同一份。
 
+印完之後**不要停在這裡**：完整讀 [DISCUSS.md](DISCUSS.md) 並照做，一項一項與使用者討論，依決定直接修正。那一步會把討論結果寫回本輪記錄的 `resolutions`。
+
 使用者看過之後明確要求送上 PR 時，才走下面的送出流程，且 `event` 一律用 `COMMENT`——GitHub 拒絕對自己的 PR 送 `APPROVE` 或 `REQUEST_CHANGES`，會以 422 退掉整個請求，一則 inline comment 都不會進去。
 
-完成判準：review body 與每則 inline comment 都已連同錨點與 `suggestion` 印在終端機上，內容與 `review.json` 相符；這一輪記錄的路徑已給出；且所有未在瀏覽器或執行環境中驗證過的部分都已說明。
+完成判準：review body 與每則 inline comment 都已連同錨點與 `suggestion` 印在終端機上，內容與 `review.json` 相符；這一輪記錄的路徑已給出；所有未在瀏覽器或執行環境中驗證過的部分都已說明；且已進入 DISCUSS.md 的逐項討論並達成其完成判準。
 
 ### 別人的 PR：送出並驗證錨點
 
