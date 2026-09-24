@@ -13,7 +13,6 @@ description: Vue 3 `<script setup>` 團隊開發規範。撰寫或修改 Vue 3 �
 - 狀態管理優先 Pinia 或 Vue Query（TanStack Query）；避免以 `provide`/`inject` 隱式傳遞。
 - 複雜邏輯抽離為 Composable，放在 **`hooks/` 目錄**（而非社群慣用的 `composables/`），檔名 `use*.ts`。
 - 元件定義用 PascalCase（`EformListWay.vue`），**Template 中必須用 kebab-case 呼叫**（`<eform-list-way />`）；無 Slot 內容時使用自閉合標籤。
-- 型別導入一律使用 `import type`，與 runtime import 分行。
 - v-model 一律使用 `defineModel`（Vue 3.4+），不手寫 props + `update:` emit；`update:` 事件因此不需出現在 Emits 定義。
 
 ## Props 與 Emits

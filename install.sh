@@ -47,6 +47,7 @@ ITEMS=(
   "skills/vue2-refactor-composable"
   "skills/coding-standards"
   "skills/e2e-testing"
+  "skills/unit-testing"
   "skills/review-pr"
 )
 

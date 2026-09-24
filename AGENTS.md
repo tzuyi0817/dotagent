@@ -20,4 +20,7 @@
 框架與領域的細節規範以 skills 承載，需要時載入，不在此重複：
 
 - Vue 3 → `vue3-setup` skill
-- React / Next.js → `frontend-patterns`、`coding-standards` skill（everything-claude-code plugin）
+- React / Next.js → 本地 `coding-standards` skill（團隊決策）；通用 patterns 參考 `everything-claude-code:frontend-patterns`
+- 單元 / 元件測試 → `unit-testing` skill；E2E → `e2e-testing` skill
+
+本地 agents / skills 與 everything-claude-code plugin 同名時（`code-reviewer`、`e2e-runner`、`refactor-cleaner`、`coding-standards`、`e2e-testing`），一律使用本地版（無 `everything-claude-code:` 前綴者）。

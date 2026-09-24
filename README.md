@@ -33,6 +33,7 @@ cd ~/Documents/dotagent && ./install.sh
 | `skills/vue2-refactor-composable` | `skills/vue2-refactor-composable` | symlink |
 | `skills/coding-standards` | `skills/coding-standards` | symlink |
 | `skills/e2e-testing` | `skills/e2e-testing` | symlink |
+| `skills/unit-testing` | `skills/unit-testing` | symlink |
 | `skills/review-pr` | `skills/review-pr` | symlink |
 | `settings.json` | `settings.json` | 複製（見下） |
 | `skills/frontend-code-review` | —（不全域部署） | Dify 專案特定（React Flow / workflowStore 規則），需要時複製至該專案的 `.claude/skills/` |
