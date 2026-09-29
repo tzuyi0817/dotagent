@@ -1,6 +1,6 @@
 ---
 name: review-pr
-description: "審查 GitHub PR 並發布有證據、可直接套用的審查意見（附 suggestion block）；使用者本人的 PR 則輸出到終端機、不 POST，並逐項與使用者討論後直接修正。當使用者要求審查某個 PR，或作者推送修正後要求再審一輪時使用。"
+description: "審查 GitHub PR 並發布有證據、可直接套用的審查意見（附 suggestion block）；使用者本人的 PR 則直接輸出在回覆中、不 POST，並逐項說明後與使用者討論、依決定修正。當使用者要求審查某個 PR，或作者推送修正後要求再審一輪時使用。"
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 走一條**證據鏈**：Finder 找出候選，Verifier 獨立裁決候選是否成立，Fix Verifier 獨立裁決修法是否正確，只有存活下來的發現進得了 review。候選還不是意見，沒人試著反駁過的修法也不是。
 
-除了必須重新產生的產物（lockfile、build 輸出），每則 inline comment 都要有**錨定的 new-file 行號範圍**、**精簡的說明**、以及可直接套用的 `suggestion` block。整輪的 inline comment 是單一 review，一次投遞：別人的 PR 送到 PR 上，使用者本人的 PR 輸出到終端機，接著逐項討論並修正（步驟 8、[DISCUSS.md](DISCUSS.md)）。
+除了必須重新產生的產物（lockfile、build 輸出），每則 inline comment 都要有**錨定的 new-file 行號範圍**、**精簡的說明**、以及可直接套用的 `suggestion` block。整輪的 inline comment 是單一 review，一次投遞：別人的 PR 送到 PR 上，使用者本人的 PR 以助理訊息直接輸出在回覆中，接著逐項說明、討論並修正（步驟 8、[DISCUSS.md](DISCUSS.md)）。
 
 **審查文字的語言**：跟隨該 repo 既有的語言與語系慣例（看既有 PR 意見與 commit message）；repo 無明確慣例時使用繁體中文（台灣）。程式碼、指令、`suggestion` block 內容不在此限。
 
@@ -23,8 +23,7 @@ gh pr diff <n> --repo <owner>/<repo> --patch | diffstat -s
 ```
 
 - **小型**（≤ 3 個檔案且 ≤ 100 行變更）：單一 Finder 套用全部 lens；步驟 6 只做 Fix Verifier 四問，略過實跑與突變。
-- **中大型**：完整流程，每個 lens 各自派一個 Finder。
-- **超大型**（> 30 個檔案或 > 1500 行變更）：只照 lens 分工，注意力會被攤薄，Finder 最後只會停在「這段寫法對不對」。「逐行」「資料來源」「操作情境與生命週期」三個 lens 改依 feature 區塊切分（依目錄或功能，每塊 ≤ 15 個檔案），每塊各派一個 Finder，其餘 lens 維持掃整份 diff。
+- **中大型**：完整流程，每個 lens 各自派一個 Finder。變更再大也不依 feature 區塊切分、不多派 Finder：切塊只會放大候選量，不會提高命中率；精確度來自步驟 3 的裁決，不來自 Finder 的數量。
 - **含以下任一者一律走完整流程**（無論行數）：認證/授權、金流、資料遷移、build 或 CI 設定、對外 API 契約、快取或並行控制。
 
 完成判準：規模已量測，路徑已選定，且選擇的理由能一句話說清楚。
@@ -68,9 +67,9 @@ new-file 行號與 suggestion 內容一律只從 `git show pr-<n>:<path>` 取得
 - **被移除的行為**：找出每個被刪除或改寫的區塊原本維持了什麼不變量，再定位新程式碼在哪裡把它補回來。哪裡都沒有，就回報一個候選。
 - **跨檔契約**：追變更函式的呼叫端與被呼叫端。檢查新的前置條件、回傳形狀、例外、時序是否讓任一邊壞掉。
 - **資料來源**：變更程式碼吃進的每個輸入（props、inject、store、函式參數），都往**上游**追到產生它的地方，問它在半路被做過什麼：過濾（例如濾掉隱藏或停用的項目）、正規化、包裝（`debounce`／`throttle`／memoize 會改變回傳值與時序）。這行程式看起來沒錯，但它拿到的資料少了一塊、或拿到的不是它以為的東西，就回報候選。
-- **平行實作對照**：找出**同一個行為的其他實作**，例如桌機與手機、新舊兩個 app、同一功能在 main 上的另一份元件，逐項比對它們讀的資料來源、清空或通知了哪些欄位、送出了哪些事件。兩邊不一致就回報候選，並指出哪一邊才對。反過來也要查：在這裡確認成立的問題，平行實作裡如果也有，記進 review body。
+- **平行實作對照**：找出**同一個行為的既有實作**，例如舊 app 的同一功能、桌機與手機的另一端、main 上的同功能元件，把它當作**行為基準**，只往一個方向比：基準有做、變更漏掉、且 PR 宣稱要移植或對齊的，才是候選。與基準一致的不是問題；變更多做的改善、基準本身的缺陷，都不回頭套到其他路徑當缺口，也不裁決「哪一邊才對」。反過來要查的只有一件事：在這裡確認成立的問題，基準裡如果也有，記進 review body。
 - **操作情境與生命週期**：不只看當下的狀態，而是拿使用者會做的操作去推：勾了又取消、重選同一個值、先改再復原；綁定之後，上游的東西被刪除、停用或換掉；數量剛好是 0 或 1（含英文單複數）；欄位是隱藏、唯讀或停用時；請求還在路上時元件就卸載了。每種操作都問：畫面、存檔內容、離開前的確認提示，是否仍然正確。
-- **執行期與互動**：語法正確不代表點得到、看得見。浮層疊放要拿**實際數值**比對，包括 z-index（跨套件的預設值與 `useZIndex` 的起算值）、遮罩是否仍會接收點擊、teleport 的目標；事件冒泡；可點擊範圍與 hover 反白範圍是否一致（內距放在沒綁 click 的外層）。這類數值多半在 diff 以外的套件裡，要打開原始碼查，不要推測。
+- **執行期與互動**（只產出 body 觀察）：語法正確不代表點得到、看得見。浮層疊放要拿**實際數值**比對，包括 z-index（跨套件的預設值與 `useZIndex` 的起算值）、遮罩是否仍會接收點擊、teleport 的目標；事件冒泡；可點擊範圍與 hover 反白範圍是否一致（內距放在沒綁 click 的外層）。這類數值多半在 diff 以外的套件裡，要打開原始碼查，不要推測。這個 lens 的候選即使 confirmed 也只進 review body，不成為 inline comment（步驟 4）：它抓的多半是 UI 打磨而非 PR 引入的失效，且沒有在瀏覽器實際操作前無法定案。
 - **宣稱 vs 實作**：把 PR 描述宣稱的每項變更在 diff 中定位，並回報每個描述沒宣稱的 diff 變更。PR body 連到的 issue 或規格檔，只要 `gh` 或 `git show` 抓得到就一併視為宣稱來源。
 - **專案慣例**：套用適用於變更檔案的 `CLAUDE.md`、`AGENTS.md`、`rules/` 規則。只有在能逐字引用該規則時才回報慣例違規。
   - 變更含 `.vue` → 一併讀 [references/vue3-checklist.md](references/vue3-checklist.md)
@@ -92,25 +91,30 @@ Finder 看不到目前這段對話，因此每個 prompt 都必須自我完備�
 
 Verifier 的 prompt 必須自我完備，且**只**包含 repo 絕對路徑、`pr-<n>` ref、base 分支、候選的四個欄位，以及下列規則。刻意排除 Finder 的推理過程，避免錨定效應。
 
-先試著**反駁**候選：找出並引用能推翻它的程式碼。技術事實不確定時——API 相容性、正規表達式行為、CSS 交互作用、套件語法——跑一個一次性的 Node 或 Python 探針，或查 caniuse 與套件原始碼。反駁失敗之後，才檢驗以下三關：
+先試著**反駁**候選：找出並引用能推翻它的程式碼。技術事實不確定時——API 相容性、正規表達式行為、CSS 交互作用、套件語法——跑一個一次性的 Node 或 Python 探針，或查 caniuse 與套件原始碼。反駁失敗之後，才檢驗以下四關：
 
 1. **有追過**：引用一個 Verifier 真的打開過的 `file:line` 作為證據。
 2. **由這個 PR 引入**：在 base 分支跑同一項檢查。只有 base 正常而 PR 失效才算過關。
-3. **具體的失效情境**：路徑可達，且後果對使用者可見。
+3. **具體的失效情境**：後果對使用者可見，且寫出具體入口：哪個頁面、哪個操作、哪種資料狀態。同時標明這條路徑是**現在就走得到**，還是要等尚未合併的功能或之後的移植才走得到；後者仍可過關，但步驟 4 不會把它列為阻擋。
+4. **前提有出處**：候選若建立在業務規則或產品行為上，例如某筆資料能否被刪除、表單何時才顯示、某個入口是否存在、某種狀態能否被走到，必須引用證明該前提的來源：後端回應或型別檔的說明、程式註解、規格或 issue、既有測試。PR 描述與先前 reviewer 的意見**不算**出處，它們是待驗證的宣稱。
 
-裁決恰好三種，每種都要附 `file:line` 證據：三關全過為 **confirmed**；只有第二關沒過為 **pre-existing**；其餘為 **invalid**。
+裁決恰好四種，每種都要附 `file:line` 證據：四關全過為 **confirmed**；只有第二關沒過為 **pre-existing**；技術事實成立但只有第四關沒過為 **unverified**，附上引不到出處的那句前提原文；其餘為 **invalid**。
 
 單一 Verifier 讀錯 ref 或讀錯分支，就會產出整個錯誤的裁決。當裁決引用的 `file:line` 對不上 `pr-<n>`，換一個 Verifier 重驗該候選。
 
-完成判準：每個候選都恰有一個帶證據的裁決，且三關各有明確結果。
+完成判準：每個候選都恰有一個帶證據的裁決，四關各有明確結果；第三關已標明現在可達或未來才可達；每個 unverified 都寫出了待確認的前提原文。
 
 ## 4. 依阻擋嚴重度分流
 
-**阻擋**的意思是：這個問題會改變作者該不該合併、或該不該接受目前這個實作。只有 confirmed 且阻擋的候選才變成 inline comment。
+**阻擋**的意思是：這個問題會改變作者該不該合併、或該不該接受目前這個實作，**而且**失效路徑是目前 PR 範圍內一般使用者操作走得到的（Verifier 第三關標為「現在」）。只有 confirmed 且阻擋的候選才變成 inline comment。以下三種即使 confirmed 也不算阻擋，一律進 body：
+
+- 第三關標為「未來才走得到」的：寫成後續工作，註明要等哪個功能。用未來的使用量推高現在的嚴重度，是上一輪被退回的主因之一。
+- 來自「執行期與互動」lens 的：寫成觀察。
+- **unverified** 的：寫進 body 的「待確認前提」段落，把那句前提照原文列出。本人的 PR 在討論階段第一個問使用者（[DISCUSS.md](DISCUSS.md)）；別人的 PR 在 body 直接向作者提問，不附 suggestion。
 
 confirmed 但不阻擋的結構性建議與後續工作、pre-existing 的觀察、有用的正向驗證結果，都放進 review body。Verifier 以強證據反駁掉某個候選時，body 可以記一筆「不需修改」的結論。其餘沒有資訊價值的 invalid 候選直接丟棄。
 
-完成判準：每個裁決都被指派到 inline comment、review body、丟棄三者其一，且每則 inline comment 都同時是 confirmed 與阻擋。
+完成判準：每個裁決都被指派到 inline comment、review body、丟棄三者其一；每則 inline comment 都同時是 confirmed、阻擋、且路徑現在可達；未來才可達的、執行期 lens 的、unverified 的都在 body 而不在 inline。
 
 ## 5. 撰寫給人看的說明與可直接套用的 suggestion
 
@@ -197,11 +201,11 @@ pnpm monorepo 在該 worktree 內以 `pnpm install --frozen-lockfile --prefer-of
 **誠實性。** 逐項檢查：
 
 - body 宣稱的發現數量，與 `comments` 陣列長度相符。
-- body 非阻擋段落的每一句話，都有指名的 Verifier 或 Fix Verifier 證據支撐。只靠 Finder 一面之詞的敘述，刪掉或降級為未決。
+- body 非阻擋段落的每一句話，都有指名的 Verifier 或 Fix Verifier 證據支撐。只靠 Finder 一面之詞的敘述，刪掉或降級為未決。「待確認前提」段落例外：它的內容本來就是尚未驗證的前提，但每一句都要標明那句前提的來源與 Verifier 查過哪裡。
 
 完成判準：每個與歷史重疊的 suggestion 都標記為延伸、推翻或來回擺盪；每個推翻都帶著先前那輪沒有的證據，並同時寫在意見與 body 中；每個來回擺盪都已撤掉且其不確定性已記入 body；body 的數字與 `comments` 陣列相符；非阻擋段落的每一句都有指名證據。
 
-## 8. 投遞 review：終端機或 PR
+## 8. 投遞 review：回覆訊息或 PR
 
 建立一個 Python 檔來產生 payload JSON。讓 Python 去編碼反引號、反斜線與引號，shell heredoc 才傷不到 suggestion 內容。
 
@@ -224,23 +228,23 @@ payload = {
 
 單行意見則省略 `start_line` 與 `start_side`。範圍必須落在 RIGHT 側的 diff hunk 內，否則 GitHub 會以 422 拒絕整個請求。
 
-payload 一律寫成 `<scratchpad>/review.json`。兩條投遞路徑共用這同一份內容：步驟 1 判定為**本人的 PR** 時輸出到終端機，否則 POST 到 PR。變的只有投遞方式，body、錨點與 suggestion 的內容不因路徑而異。兩條路徑都以「留下這一輪的記錄」收尾。
+payload 一律寫成 `<scratchpad>/review.json`。兩條投遞路徑共用這同一份內容：步驟 1 判定為**本人的 PR** 時以助理訊息輸出，否則 POST 到 PR。變的只有投遞方式，body、錨點與 suggestion 的內容不因路徑而異。兩條路徑都以「留下這一輪的記錄」收尾。
 
-### 本人的 PR：輸出到終端機
+### 本人的 PR：以助理訊息輸出
 
-自己審自己的 PR，不需要在 PR 上留下對自己說的話，因此**不 POST**。把 `review.json` 的內容照原樣印到終端機：
+自己審自己的 PR，不需要在 PR 上留下對自己說的話，因此**不 POST**。把 `review.json` 的內容照原樣寫在**回覆訊息**裡。不要用 `cat`、`echo` 或任何指令印：指令的輸出使用者看不到，只有助理訊息會顯示在對話中。
 
 - 先 review body 全文。
 - 再逐則 inline comment，每則以一行 `<path>:<start_line>-<line>` 開頭（單行意見為 `<path>:<line>`），接著說明與 `suggestion` block，逐字元照 payload 輸出，不重新排版也不摘要。
-- 最後給出這一輪記錄的路徑（記錄照下方「留下這一輪的記錄」先寫好再印）。
+- 最後給出這一輪記錄的路徑（記錄照下方「留下這一輪的記錄」先寫好再輸出）。
 
-`suggestion` block 在終端機沒有 Commit 按鈕，但範圍與內容不變，自己動手套用或事後貼上 PR 用的都是同一份。
+`suggestion` block 在對話裡沒有 Commit 按鈕，但範圍與內容不變，自己動手套用或事後貼上 PR 用的都是同一份。
 
-印完之後**不要停在這裡**：完整讀 [DISCUSS.md](DISCUSS.md) 並照做，一項一項與使用者討論，依決定直接修正。那一步會把討論結果寫回本輪記錄的 `resolutions`。
+輸出之後**不要停在這裡**：完整讀 [DISCUSS.md](DISCUSS.md) 並照做，一項一項先說明、再問、再依決定修正。那一步會把討論結果寫回本輪記錄的 `resolutions`。
 
 使用者看過之後明確要求送上 PR 時，才走下面的送出流程，且 `event` 一律用 `COMMENT`——GitHub 拒絕對自己的 PR 送 `APPROVE` 或 `REQUEST_CHANGES`，會以 422 退掉整個請求，一則 inline comment 都不會進去。
 
-完成判準：review body 與每則 inline comment 都已連同錨點與 `suggestion` 印在終端機上，內容與 `review.json` 相符；這一輪記錄的路徑已給出；所有未在瀏覽器或執行環境中驗證過的部分都已說明；且已進入 DISCUSS.md 的逐項討論並達成其完成判準。
+完成判準：review body 與每則 inline comment 都已連同錨點與 `suggestion` 以助理訊息輸出，內容與 `review.json` 相符；這一輪記錄的路徑已給出；所有未在瀏覽器或執行環境中驗證過的部分都已說明；且已進入 DISCUSS.md 的逐項討論並達成其完成判準。
 
 ### 別人的 PR：送出並驗證錨點
 
