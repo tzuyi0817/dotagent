@@ -25,6 +25,8 @@ ITEMS=(
   "skills/unit-testing"
   "skills/review-pr"
   "skills/address-review"
+  "skills/writing-for-agents"
+  "skills/grill-me"
 )
 
 broken=0
