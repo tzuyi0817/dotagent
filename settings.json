@@ -1,10 +1,11 @@
 {
-  "model": "claude-fable-5[1m]",
   "includeCoAuthoredBy": false,
+  "model": "fable",
   "enabledPlugins": {
     "everything-claude-code@everything-claude-code": true,
     "example-skills@anthropic-agent-skills": true,
-    "typescript-lsp@claude-plugins-official": true
+    "typescript-lsp@claude-plugins-official": true,
+    "swift-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "everything-claude-code": {
@@ -21,5 +22,11 @@
     }
   },
   "effortLevel": "xhigh",
-  "tui": "fullscreen"
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "xhigh"
+    }
+  },
+  "tui": "fullscreen",
+  "skipWorkflowUsageWarning": true
 }
