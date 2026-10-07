@@ -24,6 +24,7 @@ ITEMS=(
   "skills/e2e-testing"
   "skills/unit-testing"
   "skills/review-pr"
+  "skills/address-review"
 )
 
 broken=0
