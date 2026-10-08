@@ -36,23 +36,10 @@ cd ~/Documents/dotagent && ./install.sh
 | `skills/unit-testing` | `skills/unit-testing` | symlink |
 | `skills/review-pr` | `skills/review-pr` | symlink |
 | `skills/address-review` | `skills/address-review` | symlink |
-| `skills/writing-for-agents` | `skills/writing-for-agents` | symlink（外部來源，見下） |
-| `skills/grill-me` | `skills/grill-me` | symlink（外部來源，見下） |
+| `skills/writing-for-agents` | `skills/writing-for-agents` | symlink |
+| `skills/grill-plan` | `skills/grill-plan` | symlink |
 | `settings.json` | `settings.json` | 複製（見下） |
 | `skills/frontend-code-review` | —（不全域部署） | Dify 專案特定（React Flow / workflowStore 規則），需要時複製至該專案的 `.claude/skills/` |
-
-### 來自外部 repo 的 skills
-
-`writing-for-agents`、`grill-me` 譯自 [mattpocock/skills](https://github.com/mattpocock/skills)（MIT）。來源路徑、對應的上游 commit、授權與翻譯備註都記在各自 `SKILL.md` 的 frontmatter `metadata` 裡，Claude Code 會忽略這個 key。內容為繁體中文（台灣）翻譯，段落結構、標題順序與格式模板與上游一一對應；英文引導詞（_tight_、_red_、_relentless_、no-op 等）保留原文。
-
-唯一的結構變更是 `grill-me`：上游拆成 `grilling`（原語，給 `grill-with-docs`、`triage` 等 skill 呼叫）與 `grill-me`（給人輸入的入口）兩個，dotagent 沒有其他 skill 需要呼叫原語，因此合併為單一 skill，並維持 `disable-model-invocation: true`，只由 `/grill-me` 手動觸發，與 `review-pr`、`address-review` 一致。將來若有 skill 需要呼叫它，再把原語拆回 model-invoked。
-
-更新時以 frontmatter 記錄的 commit 與上游新版 diff，再把差異移植進翻譯：
-
-```bash
-git clone https://github.com/mattpocock/skills.git /tmp/mp-skills
-git -C /tmp/mp-skills diff <metadata.source.commit> HEAD -- skills/productivity/grilling skills/productivity/grill-me
-```
 
 ### 全域指引為何本體是 AGENTS.md
 
