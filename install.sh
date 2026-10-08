@@ -53,6 +53,7 @@ ITEMS=(
   "skills/writing-for-agents"
   "skills/grill-plan"
   "skills/pr-body"
+  "skills/diagnose-bug"
 )
 
 backup() {
