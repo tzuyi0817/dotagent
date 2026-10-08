@@ -40,6 +40,7 @@ cd ~/Documents/dotagent && ./install.sh
 | `skills/grill-plan` | `skills/grill-plan` | symlink |
 | `skills/pr-body` | `skills/pr-body` | symlink |
 | `skills/diagnose-bug` | `skills/diagnose-bug` | symlink |
+| `skills/build-prototype` | `skills/build-prototype` | symlink |
 | `settings.json` | `settings.json` | 複製（見下） |
 | `skills/frontend-code-review` | —（不全域部署） | Dify 專案特定（React Flow / workflowStore 規則），需要時複製至該專案的 `.claude/skills/` |
 

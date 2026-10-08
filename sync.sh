@@ -29,6 +29,7 @@ ITEMS=(
   "skills/grill-plan"
   "skills/pr-body"
   "skills/diagnose-bug"
+  "skills/build-prototype"
 )
 
 broken=0
